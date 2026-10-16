@@ -1,0 +1,38 @@
+# Curated knowledge. Every entry carries a provenance tag:
+#   verified = confirmed from node source / editor definition
+#   observed = seen in the working example flows (convention, not a rule)
+#   proposed = suggested, unconfirmed
+# Property names below were read from the example flows, not guessed.
+node_types:
+  api-connect:
+    provenance: observed
+    purpose: Calls an API operation described by an api-config node (OpenAPI spec).
+    config_refs: {apiConfig: api-config, tlsConfig: tls-config}
+    observed_properties: [apiConfig, requestType, topic, params, requestBody, requestBodyType, queryParams, queryParamsType, returnResponseType, additionalHeaders]
+    usage_rules:
+      - {rule: "apiConfig must reference an existing api-config node", provenance: observed}
+      - {rule: "returnResponseType 'sse' output is paired with an sse-response node in examples", provenance: observed}
+  api-config:
+    provenance: observed
+    purpose: Config node holding baseUrl and the OpenAPI spec lookup used by api-connect.
+    observed_properties: [baseUrl, apiSpecificationInfo, apiSpecificationLookup, apiSpecificationLookupHash]
+  http-receive:
+    provenance: observed
+    purpose: Receives HTTP requests; endpoint(s) are defined in endpointConfigs.
+    observed_properties: [endpointConfigs, authorizationType, pocketbaseConfig, jwtConfig, apiKey, outputs]
+    usage_rules:
+      - {rule: "Every request path should end in an 'http response' or 'sse-response' node", provenance: observed}
+  sse-response:
+    provenance: observed
+    purpose: Streams server-sent events back to the HTTP client of an http-receive request.
+    observed_properties: [statusCode, customHeaders]
+    usage_rules:
+      - {rule: "Takes the place of 'http response' on streaming paths", provenance: observed}
+      - {rule: "Behavior differs from core http response; confirm against source before relying on it", provenance: proposed}
+  faastapi-proxy:
+    provenance: observed
+    purpose: Proxies FastAPI endpoints chosen in selectedEndpoints; one output per endpoint.
+    config_refs: {pocketbaseConfig: faastapi-pocketbase-config}
+    observed_properties: [authenticationKind, pluginNamespace, selectedEndpoints, outputs]
+    usage_rules:
+      - {rule: "len(wires) must equal outputs; outputs tracks len(selectedEndpoints)", provenance: observed}
